@@ -1,54 +1,61 @@
-const axios = require('axios');
+const express = require("express");
+const axios = require("axios");
+const app = express();
 
-//const user  = async () => {}
-async function requestAirtime(phoneNumber, Amount){
-    //make sure the input is correct
+require("dotenv").config();
+
+const cors = require("cors");
+
+const port = process.env.PORT || 8000;
+
+app.listen(port, () => {
+    console.log(`app is running at localhost:${port}`);
+});
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors());
+
+app.get("/", (req, res) => {
+    res.send("<h1>hello from umoja<h1>");
+});
+const generateToken = async(req, res, next) => {
+
+    const secret = process.env.AIRTIME_SECRET_KEY;
+    await axios.get (" https://tandaio-api-uats.tanda.co.ke", {
+        headers: {
+            authorization: `Basic ${auth}`,
+        },
+    });
+
+};
+
+app.post("/stk", async (req, res) => {
     try {
-        if (!phoneNumber || !amount) {
-        throw new Error('Invalid request data');
-        }
-        //prepare data foor the airtime providers API
-        const requestData = {
-            phoneNumber, 
-            amount,
-        };
-        const apiKey = '#';
-        const apiUrl = ' https://io-proxy-443.tanda.co.ke/';
-        //send requests to the airtime providers API
-         const apiResponse =  await sendAirtimeRequest(requestData, apiKey, apiUrl);
+        const phone = req.body.phone;
+        const amount = req.body.amount;
 
-         //handle API response
-         const success = apiResponse.success;
-         if (success) {
-            return {succes: true, message: 'Airtime sent successfully'};
-         }else {
-            throw new Error('Failed to send airtime');
-         }
-         catch (error) {
-            console.error('Error processing airtime request:', error);
-            throw new Error('Internal server error');
-          }
-        }
-        
-        // Helper function to send requests to the airtime provider's API
-        async function sendAirtimeRequest(requestData, apiKey) {
-          const apiUrl = ' https://io-proxy-443.tanda.co.ke/';
-        
-          try {
-            const response = await axios.post(apiUrl, requestData, {
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`,
-              },
-            });
-        
-            return response.data;
-          } catch (error) {
-            console.error('Error sending airtime request to the provider:', error);
-            throw new Error('Failed to send airtime request');
-          }
-        }
-        
+        // Use the API here
+        const sdk = require('api')({
+            clientId: '688dd5b1-13f0-4ac4-a6a1-b316eb0e9939',
+            apiUrl: 'https://tandaio-api-uats.tanda.co.ke',
+        });
+
+        const response = await sdk.prepaidAirtimeVoucher({
+            commandId: 'VoucherFix',
+            serviceProviderId: 'SAFARICOM',
+            reference: 'ref00001'
+        }, {
+            organizationId: '3bde77e4-0a8b-42d9-a626-920f6733a05c'
+        });
+
+        console.log(response.data);
+
+        // Now you can use phone and amount in your logic
+
+        res.json({ phone, amount });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
-
-
+});
